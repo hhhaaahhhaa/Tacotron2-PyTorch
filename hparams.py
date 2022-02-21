@@ -39,7 +39,7 @@ class hparams:
 	sch = True
 	sch_step = 4000
 	max_iter = 200e3
-	batch_size = 64
+	batch_size = 4
 	iters_per_log = 10
 	iters_per_sample = 500
 	iters_per_ckpt = 10000

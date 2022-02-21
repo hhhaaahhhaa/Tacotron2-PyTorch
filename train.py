@@ -14,8 +14,9 @@ np.random.seed(hps.seed)
 torch.manual_seed(hps.seed)
 torch.cuda.manual_seed(hps.seed)
 
-def prepare_dataloaders(fdir):
-	trainset = ljdataset(fdir)
+
+def prepare_dataloaders(fdir, txt_path):
+	trainset = ljdataset(fdir, txt_path)
 	collate_fn = ljcollate(hps.n_frames_per_step)
 	train_loader = DataLoader(trainset, num_workers = hps.n_workers, shuffle = True,
 							  batch_size = hps.batch_size, pin_memory = hps.pin_mem,
@@ -61,7 +62,7 @@ def train(args):
 			scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
 	
 	# make dataset
-	train_loader = prepare_dataloaders(args.data_dir)
+	train_loader = prepare_dataloaders(args.data_dir, "../Dataset/LJSpeech-1.1/train.txt")
 	
 	# get logger ready
 	if args.log_dir != '':
