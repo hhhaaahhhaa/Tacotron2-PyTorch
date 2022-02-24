@@ -17,11 +17,11 @@ def load_model(ckpt_pth):
 	return model
 
 
-def infer(text, model):
-	sequence = text_to_sequence(text, hps.text_cleaners)
-	sequence = mode(torch.IntTensor(sequence)[None, :]).long()
-	mel_outputs, mel_outputs_postnet, _, alignments = model.inference(sequence)
-	return (mel_outputs, mel_outputs_postnet, alignments)
+# def infer(text, model):
+# 	sequence = text_to_sequence(text, hps.text_cleaners)
+# 	sequence = mode(torch.IntTensor(sequence)[None, :]).long()
+# 	mel_outputs, mel_outputs_postnet, _, alignments = model.inference(sequence)
+# 	return (mel_outputs, mel_outputs_postnet, alignments)
 
 
 def plot_data(data, figsize = (16, 4)):

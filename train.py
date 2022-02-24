@@ -3,25 +3,43 @@ import time
 import torch
 import argparse
 import numpy as np
-from inference import infer
+# from inference import infer
 from utils.util import mode
 from hparams import hparams as hps
 from torch.utils.data import DataLoader
 from utils.logger import Tacotron2Logger
-from utils.dataset import ljdataset, ljcollate
-from model.model import Tacotron2, Tacotron2Loss
+from utils.dataset import ljdataset, LibriTTSDataset, ljcollate, librittscollate
+from model.model import Tacotron2Loss
+from model.tacotron import Tacotron2
 np.random.seed(hps.seed)
 torch.manual_seed(hps.seed)
 torch.cuda.manual_seed(hps.seed)
 
 
-def prepare_dataloaders(fdir, txt_path):
-	trainset = ljdataset(fdir, txt_path)
+def prepare_LJSpeech_dataloaders(fdir, preprocessed_data_dir):
+	trainset = ljdataset(fdir, f"{preprocessed_data_dir}/train.txt")
 	collate_fn = ljcollate(hps.n_frames_per_step)
 	train_loader = DataLoader(trainset, num_workers = hps.n_workers, shuffle = True,
 							  batch_size = hps.batch_size, pin_memory = hps.pin_mem,
 							  drop_last = True, collate_fn = collate_fn)
-	return train_loader
+	return {"train": train_loader, "val": None, "test": None}
+
+
+def prepare_LibriTTS_dataloaders(fdir, preprocessed_data_dir):
+	trainset = LibriTTSDataset(fdir, f"{preprocessed_data_dir}/train.txt")
+	valset = LibriTTSDataset(fdir, f"{preprocessed_data_dir}/dev.txt")
+	testset = LibriTTSDataset(fdir, f"{preprocessed_data_dir}/test.txt")
+	collate_fn = librittscollate(hps.n_frames_per_step)
+	train_loader = DataLoader(trainset, num_workers = hps.n_workers, shuffle = True,
+							  batch_size = hps.batch_size, pin_memory = hps.pin_mem,
+							  drop_last = True, collate_fn = collate_fn)
+	val_loader = DataLoader(valset, num_workers = hps.n_workers, shuffle = False,
+							  batch_size = hps.batch_size, pin_memory = hps.pin_mem,
+							  drop_last = False, collate_fn = collate_fn)
+	test_loader = DataLoader(testset, num_workers = hps.n_workers, shuffle = False,
+							  batch_size = hps.batch_size, pin_memory = hps.pin_mem,
+							  drop_last = False, collate_fn = collate_fn)
+	return {"train": train_loader, "val": val_loader, "test": test_loader}
 
 
 def load_checkpoint(ckpt_pth, model, optimizer):
@@ -40,7 +58,7 @@ def save_checkpoint(model, optimizer, iteration, ckpt_pth):
 
 def train(args):
 	# build model
-	model = Tacotron2()
+	model = Tacotron2(args.preprocessed_data_dir)
 	mode(model, True)
 	optimizer = torch.optim.Adam(model.parameters(), lr = hps.lr,
 								betas = hps.betas, eps = hps.eps,
@@ -62,7 +80,9 @@ def train(args):
 			scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
 	
 	# make dataset
-	train_loader = prepare_dataloaders(args.data_dir, "../Dataset/LJSpeech-1.1/train.txt")
+	# loaders = prepare_LJSpeech_dataloaders(args.data_dir, args.preprocessed_data_dir)
+	loaders = prepare_LibriTTS_dataloaders(args.data_dir, args.preprocessed_data_dir)
+	train_loader = loaders["train"]
 	
 	# get logger ready
 	if args.log_dir != '':
@@ -112,7 +132,7 @@ def train(args):
 			# sample
 			if args.log_dir != '' and (iteration % hps.iters_per_sample == 0):
 				model.eval()
-				output = infer(hps.eg_text, model)
+				output = model.infer(hps.eg_text, "103")
 				model.train()
 				logger.sample_training(output, iteration)
 			
@@ -131,6 +151,8 @@ if __name__ == '__main__':
 	# path
 	parser.add_argument('-d', '--data_dir', type = str, default = 'data',
 						help = 'directory to load data')
+	parser.add_argument('-pd', '--preprocessed_data_dir', type = str, default = 'data',
+						help = 'directory of preprocessed files')
 	parser.add_argument('-l', '--log_dir', type = str, default = 'log',
 						help = 'directory to save tensorboard logs')
 	parser.add_argument('-cd', '--ckpt_dir', type = str, default = 'ckpt',
