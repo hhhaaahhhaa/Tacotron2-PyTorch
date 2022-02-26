@@ -91,6 +91,8 @@ def train(args):
 			os.chmod(args.log_dir, 0o775)
 		logger = Tacotron2Logger(args.log_dir)
 
+	os.makedirs(args.result_dir)
+
 	# get ckpt_dir ready
 	if args.ckpt_dir != '' and not os.path.isdir(args.ckpt_dir):
 		os.makedirs(args.ckpt_dir)
@@ -135,6 +137,7 @@ def train(args):
 				output = model.infer(hps.eg_text, "103")
 				model.train()
 				logger.sample_training(output, iteration)
+				logger.save_audio(output, f"{args.result_dir}/{iteration:07d}.wav")
 			
 			# save ckpt
 			if args.ckpt_dir != '' and (iteration % hps.iters_per_ckpt == 0):
@@ -149,10 +152,12 @@ def train(args):
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	# path
-	parser.add_argument('-d', '--data_dir', type = str, default = 'data',
+	parser.add_argument('-d', '--data_dir', type = str,
 						help = 'directory to load data')
-	parser.add_argument('-pd', '--preprocessed_data_dir', type = str, default = 'data',
+	parser.add_argument('-pd', '--preprocessed_data_dir', type = str,
 						help = 'directory of preprocessed files')
+	parser.add_argument('-rd', '--result_dir', type = str, default = 'result',
+						help = 'directory to save results')
 	parser.add_argument('-l', '--log_dir', type = str, default = 'log',
 						help = 'directory to save tensorboard logs')
 	parser.add_argument('-cd', '--ckpt_dir', type = str, default = 'ckpt',

@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.io import wavfile
 from utils.util import to_arr
 from hparams import hparams as hps
 from tensorboardX import SummaryWriter
@@ -44,3 +45,14 @@ class Tacotron2Logger(SummaryWriter):
 				self.add_audio('pred_postnet', wav_postnet, iteration, hps.sample_rate)
 			except:
 				pass
+
+	def save_audio(self, output, filename):
+		mel_outputs_postnet = to_arr(output[1][0])
+
+		# save audio
+		try: # sometimes error
+			wav_postnet = inv_melspectrogram(mel_outputs_postnet)
+			wav_postnet /= max(0.01, np.max(np.abs(wav_postnet)))
+			wavfile.write(filename, hps.sample_rate, wav_postnet)
+		except:
+			pass

@@ -6,6 +6,9 @@ from resemblyzer import VoiceEncoder, preprocess_wav
 import warnings
 import json
 
+from hparams import hparams as hps
+from utils.audio import load_wav
+
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -45,7 +48,7 @@ class LibriTTSPreprocessor(object):
     def preprocess(self):
         self.dsets = {"train": "train-clean-100", "dev": "dev-clean", "test": "test-clean"}
         self.generate_metadata_txt()
-        self.extract_spk_dvectors()
+        # self.extract_spk_dvectors()
 
     def generate_metadata_txt(self):
         for k, v in self.dsets.items():
@@ -64,6 +67,18 @@ class LibriTTSPreprocessor(object):
                             text = f.readline().strip("\n")
                         wav_name = os.path.join(v, speaker, chapter, base_name)
                         lines.append(f"{wav_name}|{speaker}|{text}")
+
+            # Filter length
+            new_lines = []
+            for line in tqdm(lines, desc="Filter out >15s audios."):
+                wav_name = line.split("|")[0]
+                wav = load_wav(f"{self.raw_data_dir}/{wav_name}.wav")
+                if len(wav) > hps.sample_rate * 15:
+                    print(f"{self.raw_data_dir}/{wav_name}.wav is too long.")
+                else:
+                    new_lines.append(line)
+            lines = new_lines
+            
             with open(f"{self.preprocessed_data_dir}/{k}.txt", 'w', encoding='utf-8') as f:
                 for line in lines:
                     f.write(line + '\n')
