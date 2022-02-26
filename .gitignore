@@ -116,4 +116,6 @@ learn2learn/
 # data, checkpoint, and models
 /exp/
 /log/
+/Data/
+/result/
 tt.py

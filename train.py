@@ -91,7 +91,7 @@ def train(args):
 			os.chmod(args.log_dir, 0o775)
 		logger = Tacotron2Logger(args.log_dir)
 
-	os.makedirs(args.result_dir)
+	os.makedirs(args.result_dir, exist_ok=True)
 
 	# get ckpt_dir ready
 	if args.ckpt_dir != '' and not os.path.isdir(args.ckpt_dir):

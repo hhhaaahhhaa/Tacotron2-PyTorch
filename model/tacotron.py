@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from math import sqrt
 from hparams import hparams as hps
-from model.speaker_encoder import SpeakerTable
+from model.speaker_encoder import SpeakerTable, ResemblyzerTable
 from utils.util import mode, get_mask_from_lengths
 from text import text_to_sequence
 
@@ -27,8 +27,16 @@ class Tacotron2(nn.Module):
 		self.postnet = Postnet()
 
 		if self.use_spk:
-			self.sid_emb = SpeakerTable(preprocessed_data_dir, hps.spk_embedding_dim)
-			self.projection = nn.Linear(hps.spk_embedding_dim, hps.encoder_embedding_dim)
+			# Add
+			# self.sid_emb = ResemblyzerTable(preprocessed_data_dir, hps.spk_embedding_dim)
+			# self.projection = nn.Linear(hps.spk_embedding_dim, hps.encoder_embedding_dim)
+
+			# Concat
+			# self.sid_emb = ResemblyzerTable(preprocessed_data_dir, hps.spk_embedding_dim)
+			# self.projection = nn.Linear(hps.encoder_embedding_dim + hps.spk_embedding_dim, hps.encoder_embedding_dim)
+
+			# Scratch
+			self.sid_emb = SpeakerTable(preprocessed_data_dir, hps.encoder_embedding_dim)
 
 		if self.use_gst:
 			pass
@@ -71,7 +79,18 @@ class Tacotron2(nn.Module):
 		encoder_outputs = self.encoder(embedded_inputs, text_lengths)
 
 		if hps.use_spk:
-			sid_embs = self.projection(self.sid_emb(spks))
+			# Add
+			# sid_embs = self.projection(self.sid_emb(spks))
+			# encoder_outputs = encoder_outputs + sid_embs.unsqueeze(1)
+
+			# Concat
+			# sid_embs = self.sid_emb(spks)
+			# sid_embs = sid_embs.unsqueeze(1).expand(-1, encoder_outputs.size(1), -1)
+			# encoder_outputs = torch.cat([encoder_outputs, sid_embs], dim=2)
+			# encoder_outputs = self.projection(encoder_outputs)
+
+			# Scratch
+			sid_embs = self.sid_emb(spks)
 			encoder_outputs = encoder_outputs + sid_embs.unsqueeze(1)
 			
 		if hps.use_gst:
@@ -93,7 +112,18 @@ class Tacotron2(nn.Module):
 
 		if hps.use_spk:
 			assert spk is not None
-			sid_embs = self.projection(self.sid_emb(mode(torch.LongTensor([spk]))))
+			# Add
+			# sid_embs = self.projection(self.sid_emb(mode(torch.LongTensor([spk]))))
+			# encoder_outputs = encoder_outputs + sid_embs.unsqueeze(1)
+
+			# Concat
+			# sid_embs = self.sid_emb(mode(torch.LongTensor([spk])))
+			# sid_embs = sid_embs.unsqueeze(1).expand(-1, encoder_outputs.size(1), -1)
+			# encoder_outputs = torch.cat([encoder_outputs, sid_embs], dim=2)
+			# encoder_outputs = self.projection(encoder_outputs)
+
+			# Scratch
+			sid_embs = self.sid_emb(mode(torch.LongTensor([spk])))
 			encoder_outputs = encoder_outputs + sid_embs.unsqueeze(1)
 			
 		if hps.use_gst:
