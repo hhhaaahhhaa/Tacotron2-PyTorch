@@ -17,7 +17,7 @@ torch.cuda.manual_seed(hps.seed)
 
 
 def prepare_LJSpeech_dataloaders(fdir, preprocessed_data_dir):
-	trainset = ljdataset(fdir, f"{preprocessed_data_dir}/train.txt")
+	trainset = ljdataset(fdir, f"{preprocessed_data_dir}/all.txt")
 	collate_fn = ljcollate(hps.n_frames_per_step)
 	train_loader = DataLoader(trainset, num_workers = hps.n_workers, shuffle = True,
 							  batch_size = hps.batch_size, pin_memory = hps.pin_mem,
@@ -80,8 +80,8 @@ def train(args):
 			scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
 	
 	# make dataset
-	# loaders = prepare_LJSpeech_dataloaders(args.data_dir, args.preprocessed_data_dir)
-	loaders = prepare_LibriTTS_dataloaders(args.data_dir, args.preprocessed_data_dir)
+	loaders = prepare_LJSpeech_dataloaders(args.data_dir, args.preprocessed_data_dir)
+	# loaders = prepare_LibriTTS_dataloaders(args.data_dir, args.preprocessed_data_dir)
 	train_loader = loaders["train"]
 	
 	# get logger ready
@@ -134,7 +134,9 @@ def train(args):
 			# sample
 			if args.log_dir != '' and (iteration % hps.iters_per_sample == 0):
 				model.eval()
-				output = model.infer(hps.eg_text, "103")
+				# LJSpeech can not specific speaker.
+				# For LibriTTS, select a speaker ID, defualt use speaker 103.
+				output = model.infer(hps.eg_text, None)
 				model.train()
 				logger.sample_training(output, iteration)
 				logger.save_audio(output, f"{args.result_dir}/{iteration:07d}.wav")

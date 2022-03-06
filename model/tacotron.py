@@ -163,7 +163,8 @@ class Tacotron2(nn.Module):
 		sequence = mode(torch.IntTensor(sequence)[None, :]).long()
 
 		if hps.use_spk:
-			assert spk is not None
+			if spk is None:
+				spk = "103"
 			spk = self.sid_emb.speaker_name2id(spk)
 		mel_outputs, mel_outputs_postnet, _, alignments = self.inference(sequence, spk)
 

@@ -3,25 +3,18 @@ import argparse
 import numpy as np
 import matplotlib.pylab as plt
 from text import text_to_sequence
-from model.model import Tacotron2
+from model.tacotron import Tacotron2
 from hparams import hparams as hps
 from utils.util import mode, to_arr
 from utils.audio import save_wav, inv_melspectrogram
 
 
-def load_model(ckpt_pth):
+def load_model(ckpt_pth, preprocessed_data_dir):
 	ckpt_dict = torch.load(ckpt_pth)
-	model = Tacotron2()
+	model = Tacotron2(preprocessed_data_dir)
 	model.load_state_dict(ckpt_dict['model'])
 	model = mode(model, True).eval()
 	return model
-
-
-# def infer(text, model):
-# 	sequence = text_to_sequence(text, hps.text_cleaners)
-# 	sequence = mode(torch.IntTensor(sequence)[None, :]).long()
-# 	mel_outputs, mel_outputs_postnet, _, alignments = model.inference(sequence)
-# 	return (mel_outputs, mel_outputs_postnet, alignments)
 
 
 def plot_data(data, figsize = (16, 4)):
@@ -40,20 +33,19 @@ def plot(output, pth):
 
 def audio(output, pth):
 	mel_outputs, mel_outputs_postnet, _ = output
-	#wav = inv_melspectrogram(to_arr(mel_outputs[0]))
 	wav_postnet = inv_melspectrogram(to_arr(mel_outputs_postnet[0]))
-	#save_wav(wav, pth+'.wav')
 	save_wav(wav_postnet, pth+'.wav')
 
 
 def save_mel(output, pth):
 	mel_outputs, mel_outputs_postnet, _ = output
-	#np.save(pth+'.npy', to_arr(mel_outputs[0]).T)
-	np.save(pth+'.npy', to_arr(mel_outputs[0]).T)
+	np.save(pth+'.npy', to_arr(mel_outputs_postnet))
 
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
+	parser.add_argument('-pd', '--preprocessed_data_dir', type = str,
+						help = 'directory of preprocessed files')
 	parser.add_argument('-c', '--ckpt_pth', type = str, default = '',
 						required = True, help = 'path to load checkpoints')
 	parser.add_argument('-i', '--img_pth', type = str, default = '',
@@ -69,8 +61,8 @@ if __name__ == '__main__':
 	
 	torch.backends.cudnn.enabled = True
 	torch.backends.cudnn.benchmark = False
-	model = load_model(args.ckpt_pth)
-	output = infer(args.text, model)
+	model = load_model(args.ckpt_pth, args.preprocessed_data_dir)
+	output = model.infer(args.text)
 	if args.img_pth != '':
 		plot(output, args.img_pth)
 	if args.wav_pth != '':

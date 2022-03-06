@@ -51,10 +51,12 @@ class LibriTTSPreprocessor(object):
         # self.extract_spk_dvectors()
 
     def generate_metadata_txt(self):
+        speakers = []
         for k, v in self.dsets.items():
             lines = []
             in_dir = f"{self.raw_data_dir}/{v}"
             for speaker in tqdm(os.listdir(in_dir), desc=k+"-speakers"):
+                speakers.append(speaker)
                 for chapter in os.listdir(os.path.join(in_dir, speaker)):
                     for file_name in os.listdir(os.path.join(in_dir, speaker, chapter)):
                         if file_name[-4:] != ".wav":
@@ -83,6 +85,11 @@ class LibriTTSPreprocessor(object):
                 for line in lines:
                     f.write(line + '\n')
             self.log(f"Write to {self.preprocessed_data_dir}/{k}.txt.")
+
+        # Speakers to ID
+        with open(f"{self.preprocessed_data_dir}/speakers.json", 'w', encoding="utf-8") as f:
+                speakers = {spk: i for i, spk in enumerate(speakers)}
+                json.dump(speakers, f, indent=4)
 
     def extract_spk_dvectors(self):
         spk_wavs = {}
@@ -113,10 +120,6 @@ class LibriTTSPreprocessor(object):
             avg_embed = np.mean(np.stack(spk_embeds[spk]), axis=0)
             with open(f"{self.preprocessed_data_dir}/dvector/{spk}.npy", 'wb') as f:
                 np.save(f, avg_embed)
-        with open(f"{self.preprocessed_data_dir}/speakers.json", 'w', encoding="utf-8") as f:
-            speakers = list(spk_embeds.keys())
-            speakers = {spk: i for i, spk in enumerate(speakers)}
-            json.dump(speakers, f, indent=4)
         self.log(f"Write dvectors to {self.preprocessed_data_dir}/dvector.")
 
     def log(self, msg):
@@ -125,8 +128,8 @@ class LibriTTSPreprocessor(object):
 
 def main(args):
     os.makedirs(args.output_dir, exist_ok=True)
-    # preprocessor = LJSpeechPreprocessor(args.data_dir, args.output_dir)
-    preprocessor = LibriTTSPreprocessor(args.data_dir, args.output_dir)
+    preprocessor = LJSpeechPreprocessor(args.data_dir, args.output_dir)
+    # preprocessor = LibriTTSPreprocessor(args.data_dir, args.output_dir)
     preprocessor.preprocess()
 
 
