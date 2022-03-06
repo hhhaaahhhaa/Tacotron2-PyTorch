@@ -22,19 +22,19 @@ Support LJSpeech and LibriTTS.
 1. For training Tacotron2, run the following command.
 
 ```bash
-python3 train.py --data_dir=<dir/to/dataset> --ckpt_dir=<dir/to/models>
+python3 train.py --data_dir=<dir/to/dataset> --preprocessed_data_dir=<dir/to/preprocessed> --ckpt_dir=<dir/to/models>
 ```
 
 2. For training using a pretrained model, run the following command.
 
 ```bash
-python3 train.py --data_dir=<dir/to/dataset> --ckpt_dir=<dir/to/models> --ckpt_pth=<pth/to/pretrained/model>
+python3 train.py --data_dir=<dir/to/dataset> --preprocessed_data_dir=<dir/to/preprocessed> --ckpt_dir=<dir/to/models> --ckpt_pth=<pth/to/pretrained/model>
 ```
 
 3. For using Tensorboard (optional), run the following command.
 
 ```bash
-python3 train.py --data_dir=<dir/to/dataset> --ckpt_dir=<dir/to/models> --log_dir=<dir/to/logs>
+python3 train.py --data_dir=<dir/to/dataset> --preprocessed_data_dir=<dir/to/preprocessed> --ckpt_dir=<dir/to/models> --log_dir=<dir/to/logs>
 ```
 
 You can find alinment images and synthesized audio clips during training. Recording freqency and text to synthesize can be set in `hparams.py`.
@@ -43,7 +43,7 @@ You can find alinment images and synthesized audio clips during training. Record
 - For synthesizing wav files, run the following command.
 
 ```bash
-python3 inference.py --preprocessed_data_dir=<preprocessed data directory> --ckpt_pth=<pth/to/model> --img_pth=<pth/to/save/alignment> --wav_pth=<pth/to/save/wavs> --npy_pth=<pth/to/save/npys> --text=<text/to/synthesize>
+python3 inference.py --preprocessed_data_dir=<dir/to/preprocessed> --ckpt_pth=<pth/to/model> --img_pth=<pth/to/save/alignment> --wav_pth=<pth/to/save/wavs> --npy_pth=<pth/to/save/npys> --text=<text/to/synthesize>
 ```
 
 ## Pretrained Model
