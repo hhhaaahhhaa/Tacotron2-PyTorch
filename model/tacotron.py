@@ -55,19 +55,18 @@ class Tacotron2(nn.Module):
 
 		return (
 			(text_padded, input_lengths, mel_padded, max_len, output_lengths, spks),
-			(mel_padded, gate_padded))
+			(mel_padded, gate_padded, output_lengths))
 
 	def parse_output(self, outputs, output_lengths=None):
-		if self.mask_padding and output_lengths is not None:
+		if output_lengths is not None:
 			mask = ~get_mask_from_lengths(output_lengths, True) # (B, T)
-			mask = mask.expand(self.num_mels, mask.size(0), mask.size(1)) # (80, B, T)
+			mask = mask.expand(hps.num_mels, mask.size(0), mask.size(1)) # (80, B, T)
 			mask = mask.permute(1, 0, 2) # (B, 80, T)
 			
 			outputs[0].data.masked_fill_(mask, 0.0) # (B, 80, T)
 			outputs[1].data.masked_fill_(mask, 0.0) # (B, 80, T)
-			slice = torch.arange(0, mask.size(2), self.n_frames_per_step)
+			slice = torch.arange(0, mask.size(2), hps.n_frames_per_step)
 			outputs[2].data.masked_fill_(mask[:, 0, slice], 1e3)  # gate energies (B, T//n_frames_per_step)
-
 		return outputs
 
 	def forward(self, inputs):

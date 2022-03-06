@@ -21,10 +21,11 @@ def load_model(ckpt_pth, preprocessed_data_dir):
 def plot_data(data, figsize = (16, 4)):
 	fig, axes = plt.subplots(1, len(data), figsize = figsize)
 	for i in range(len(data)):
-		axes[i].imshow(data[i], aspect = 'auto', origin = 'bottom')
+		axes[i].imshow(data[i], aspect = 'auto', origin = 'lower')
 
 
 def plot(output, pth):
+	os.makedirs(os.path.dirname(pth), exist_ok=True)
 	mel_outputs, mel_outputs_postnet, alignments = output
 	plot_data((to_arr(mel_outputs[0]),
 				to_arr(mel_outputs_postnet[0]),
@@ -33,14 +34,15 @@ def plot(output, pth):
 
 
 def audio(output, pth):
+	os.makedirs(os.path.dirname(pth), exist_ok=True)
 	mel_outputs, mel_outputs_postnet, _ = output
 	wav_postnet = inv_melspectrogram(to_arr(mel_outputs_postnet[0]))
 	save_wav(wav_postnet, pth+'.wav')
 
 
 def save_mel(output, pth):
-	mel_outputs, mel_outputs_postnet, _ = output
 	os.makedirs(os.path.dirname(pth), exist_ok=True)
+	mel_outputs, mel_outputs_postnet, _ = output
 	np.save(pth+'.npy', to_arr(mel_outputs_postnet))
 
 
@@ -64,7 +66,7 @@ if __name__ == '__main__':
 	torch.backends.cudnn.enabled = True
 	torch.backends.cudnn.benchmark = False
 	model = load_model(args.ckpt_pth, args.preprocessed_data_dir)
-	output = model.infer(args.text)
+	output = model.infer(args.text, None)  # Select a speaker ID for multispeaker TTS.
 	if args.img_pth != '':
 		plot(output, args.img_pth)
 	if args.wav_pth != '':

@@ -109,7 +109,7 @@ def train(args):
 			y_pred = model(x)
 
 			# loss
-			loss, item = criterion(y_pred, y, iteration)
+			loss, items = criterion(y_pred, y)
 			
 			# zero grad
 			model.zero_grad()
@@ -121,26 +121,26 @@ def train(args):
 			if hps.sch:
 				scheduler.step()
 			
-			# info
 			dur = time.perf_counter()-start
-			print('Iter: {} Loss: {:.2e} Grad Norm: {:.2e} {:.1f}s/it'.format(
-				iteration, item, grad_norm, dur))
-			
+			# info
+			print('Iter: {} Mel Loss: {:.2e} Gate Loss: {:.2e} Grad Norm: {:.2e} {:.1f}s/it'.format(
+				iteration, items[0], items[1], grad_norm, dur))
+
 			# log
 			if args.log_dir != '' and (iteration % hps.iters_per_log == 0):
 				learning_rate = optimizer.param_groups[0]['lr']
-				logger.log_training(item, grad_norm, learning_rate, iteration)
+				logger.log_training(items, grad_norm, learning_rate, iteration)
 			
 			# sample
 			if args.log_dir != '' and (iteration % hps.iters_per_sample == 0):
-				model.eval()
 				# LJSpeech can not specific speaker.
 				# For LibriTTS, select a speaker ID, defualt use speaker 103.
 				output = model.infer(hps.eg_text, None)
 				model.train()
-				logger.sample_training(output, iteration)
+				logger.sample_train(y_pred, iteration)
+				logger.sample_infer(output, iteration)
 				logger.save_audio(output, f"{args.result_dir}/{iteration:07d}.wav")
-			
+
 			# save ckpt
 			if args.ckpt_dir != '' and (iteration % hps.iters_per_ckpt == 0):
 				ckpt_pth = os.path.join(args.ckpt_dir, 'ckpt_{}'.format(iteration))
