@@ -6,3 +6,5 @@ librosa
 Unidecode
 matplotlib
 tensorboardX
+tqdm
+resemblyzer

@@ -30,7 +30,7 @@ class hparams:
 	################################
 	is_cuda = True
 	pin_mem = True
-	n_workers = 8
+	n_workers = 4
 	prep = True
 	pth = 'lj-22k.pth'
 	lr = 2e-3
@@ -38,7 +38,7 @@ class hparams:
 	eps = 1e-6
 	sch = True
 	sch_step = 4000
-	max_iter = 200e3
+	max_iter = 100000
 	batch_size = 64
 	iters_per_log = 10
 	iters_per_sample = 500
@@ -64,14 +64,14 @@ class hparams:
 	n_frames_per_step = 3
 	decoder_rnn_dim = 1024
 	prenet_dim = 256
-	max_decoder_steps = 1000
+	max_decoder_ratio = 10
 	gate_threshold = 0.5
 	p_attention_dropout = 0.1
 	p_decoder_dropout = 0.1
 
 	# Attention parameters
 	attention_rnn_dim = 1024
-	attention_dim = 256
+	attention_dim = 128
 
 	# Location Layer parameters
 	attention_location_n_filters = 32
@@ -82,3 +82,9 @@ class hparams:
 	postnet_kernel_size = 5
 	postnet_n_convolutions = 5
 
+	################################
+	# Other                        #
+	################################
+	use_spk = False
+	use_gst = False
+	spk_embedding_dim = 256  # Resemblyzer use 256 dim
