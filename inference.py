@@ -1,3 +1,4 @@
+import os
 import torch
 import argparse
 import numpy as np
@@ -39,6 +40,7 @@ def audio(output, pth):
 
 def save_mel(output, pth):
 	mel_outputs, mel_outputs_postnet, _ = output
+	os.makedirs(os.path.dirname(pth), exist_ok=True)
 	np.save(pth+'.npy', to_arr(mel_outputs_postnet))
 
 
